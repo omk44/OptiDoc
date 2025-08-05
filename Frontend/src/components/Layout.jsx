@@ -1,16 +1,21 @@
-// src/components/Layout.jsx
-import { Outlet } from "react-router-dom";
+import React from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { Outlet, useLocation } from "react-router-dom";
 
-export default function Layout() {
+const Layout = () => {
+  const location = useLocation();
+  const hideNavbar = location.pathname === "/login" || location.pathname === "/signup";
+
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen p-4">
+      {!hideNavbar && <Navbar />}
+      <main className="min-h-screen px-4 sm:px-8 md:px-16 py-8">
         <Outlet />
       </main>
-      <Footer />
+      {!hideNavbar && <Footer />}
     </>
   );
-}
+};
+
+export default Layout;
