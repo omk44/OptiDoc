@@ -1,151 +1,11 @@
-// // src/pages/Login.jsx
-// import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { useAuth } from "../context/AuthContext";
-// import { dummyUsers } from "../data/users";
-
-// const Login = () => {
-//   const { login } = useAuth();
-//   const navigate = useNavigate();
-
-//   const [formData, setFormData] = useState({
-//     username: "",
-//     password: "",
-//     role: "patient",
-//   });
-
-//   const [error, setError] = useState("");
-
-//   const handleChange = (e) => {
-//     setFormData({ ...formData, [e.target.name]: e.target.value });
-//   };
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-
-//     const matchedUser = dummyUsers.find(
-//       (u) =>
-//         u.username === formData.username &&
-//         u.password === formData.password &&
-//         u.role === formData.role
-//     );
-
-//     if (matchedUser) {
-//       login(matchedUser);
-//       // Navigate based on role
-//       if (matchedUser.role === "admin") navigate("/admin-dashboard");
-//       else if (matchedUser.role === "doctor") navigate("/doctor-dashboard");
-//       else if (matchedUser.role === "patient") navigate("/patient-dashboard");
-//     } else {
-//       setError("Invalid credentials or role mismatch.");
-//     }
-//   };
-
-//   return (
-//     <div className="flex justify-center items-center h-screen bg-gray-100">
-//       <form
-//         onSubmit={handleSubmit}
-//         className="bg-white p-8 rounded shadow-md w-full max-w-sm"
-//       >
-//         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-
-//         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-
-//         <div className="mb-4">
-//           <label className="block mb-1">Username</label>
-//           <input
-//             name="username"
-//             value={formData.username}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 border rounded"
-//             required
-//           />
-//         </div>
-
-//         <div className="mb-4">
-//           <label className="block mb-1">Password</label>
-//           <input
-//             name="password"
-//             type="password"
-//             value={formData.password}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 border rounded"
-//             required
-//           />
-//         </div>
-
-//         <div className="mb-4">
-//           <label className="block mb-1">Login as</label>
-//           <select
-//             name="role"
-//             value={formData.role}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 border rounded"
-//           >
-//             <option value="patient">Patient</option>
-//             <option value="doctor">Doctor</option>
-//             <option value="admin">Admin</option>
-//           </select>
-//         </div>
-
-//         <button
-//           type="submit"
-//           className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-//         >
-//           Login
-//         </button>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default Login;
-
-// Assume these are defined elsewhere in your project:
-// 1. src/context/AuthContext.jsx: Provides the authentication context (useAuth hook)
-//    Example (AuthContext.jsx):
-//    import React, { createContext, useContext, useState, useEffect } from 'react';
-//    const AuthContext = createContext(null);
-//    export const AuthProvider = ({ children }) => {
-//      const [user, setUser] = useState(() => {
-//        const storedUser = localStorage.getItem('user');
-//        return storedUser ? JSON.parse(storedUser) : { isLoggedIn: false, name: '', role: '' };
-//      });
-//
-//      const login = (userData) => {
-//        setUser({ isLoggedIn: true, ...userData });
-//        localStorage.setItem('user', JSON.stringify({ isLoggedIn: true, ...userData }));
-//      };
-//
-//      const logout = () => {
-//        setUser({ isLoggedIn: false, name: '', role: '' });
-//        localStorage.removeItem('user');
-//      };
-//
-//      return (
-//        <AuthContext.Provider value={{ user, login, logout }}>
-//          {children}
-//        </AuthContext.Provider>
-//      );
-//    };
-//    export const useAuth = () => useContext(AuthContext);
-//
-// 2. src/data/users.js: Contains dummy user data for demonstration
-//    Example (users.js):
-//    export const dummyUsers = [
-//      { username: 'patient@example.com', password: 'password123', role: 'patient', name: 'John Doe' },
-//      { username: 'doctor@example.com', password: 'password123', role: 'doctor', name: 'Dr. Smith' },
-//      { username: 'admin@example.com', password: 'admin123', role: 'admin', name: 'Admin User' },
-//    ];
 import React, { useState } from 'react';
-import { useNavigate,Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import doctorIcon from "../assets/doctor_icon.png"; // Ensure this path and file exist
 import bg from "../assets/bg.png"; // Ensure this path and file exist
-
+import { api } from '../api';
 
 import { useAuth } from "../context/AuthContext";
-import { dummyUsers } from "../data/users";
 
 const Login = () => {
   const { login } = useAuth();
@@ -163,31 +23,47 @@ const Login = () => {
     setError('');
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    const matchedUser = dummyUsers.find(
-      (user) =>
-        user.username === formData.username &&
-        user.password === formData.password &&
-        user.role === formData.role
-    );
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
 
-    if (matchedUser) {
-      login(matchedUser);
-      localStorage.setItem('user', JSON.stringify({ isLoggedIn: true, ...matchedUser }));
+      const data = await response.json();
 
-      if (matchedUser.role === 'admin') {
-        navigate('/admin-dashboard');
-      } else if (matchedUser.role === 'doctor') {
-        navigate('/doctor-dashboard');
-      } else if (matchedUser.role === 'patient') {
-        navigate('/');
+      if (response.ok) {
+        // Correctly pass the 'user' object from the backend response to the login function.
+        // The backend sends { message: 'Login successful', user: { ... } }.
+        // The login function in AuthContext expects the user object directly.
+        login(data.user);
+
+        // Navigate based on role, using the role from the 'user' object
+        if (data.user.role === "admin") {
+          navigate("/admin-dashboard");
+        } else if (data.user.role === "doctor") {
+          navigate("/doctor-dashboard");
+        } else if (data.user.role === "patient") {
+          navigate("/");
+        }
+      } else {
+        setError(data.message || "Login failed. Please check credentials.");
       }
-    } else {
-      setError('Invalid credentials or role mismatch.');
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("Server error. Please try again later.");
     }
   };
+
 
   return (
     <div className="flex h-screen overflow-hidden font-sans">
@@ -226,8 +102,8 @@ const Login = () => {
           <div className="flex items-center bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-200 focus-within:border-blue-500">
             <FaEnvelope className="mr-3 text-gray-500 text-xl" />
             <input
-              type="email"
-              placeholder="Email (e.g., patient@example.com)"
+              type="username" // Changed from type="email" to type="username" for consistency with placeholder
+              placeholder="UserName (e.g., patient@example.com)"
               name="username"
               value={formData.username}
               onChange={handleChange}
