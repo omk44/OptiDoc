@@ -1,22 +1,48 @@
-// src/pages/Appointments.jsx
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext"; // Import useAuth hook
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
-  const user = JSON.parse(localStorage.getItem("loggedInUser"));
-  const navigate = useNavigate();
+  const { user } = useAuth(); // Get user from AuthContext
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("appointments")) || [];
+    const fetchAppointments = async () => {
+      // Only fetch if user is available
+      if (!user || !user._id) { // Ensure user and user._id exist
+        setAppointments([]); // Clear appointments if no user
+        return;
+      }
 
-    let visibleAppointments = stored;
-    if (user?.role === "patient") {
-      visibleAppointments = stored.filter(app => app.patientUsername === user.username);
-    }
+      try {
+        let res;
+        // Construct the base URL for appointments API
+        const baseUrl = "http://localhost:5000/api/appointments";
 
-    setAppointments(visibleAppointments);
-  }, []);
+        if (user.role === "patient") {
+          res = await axios.get(`${baseUrl}/patient/${user._id}`);
+        } else if (user.role === "doctor") {
+          res = await axios.get(`${baseUrl}/doctor/${user._id}`);
+        } else if (user.role === "admin") {
+          res = await axios.get(baseUrl); // Admin gets all appointments
+        }
+        
+        // Ensure response data is an array before setting state
+        if (res && Array.isArray(res.data)) {
+          setAppointments(res.data);
+        } else {
+          setAppointments([]); // Set to empty array if data is not as expected
+          console.warn("API response for appointments was not an array:", res.data);
+        }
+
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+        setAppointments([]); // Clear appointments on error
+      }
+    };
+
+    fetchAppointments();
+  }, [user]); // Re-run effect when user changes
 
   if (!user) {
     return <p className="p-4 text-red-600">Please login to view appointments.</p>;
@@ -25,17 +51,18 @@ export default function Appointments() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Your Appointments</h2>
+
       {appointments.length === 0 ? (
         <p>No appointments found.</p>
       ) : (
         <ul className="space-y-4">
-          {appointments.map((app, index) => (
+          {appointments.map((app) => ( // Removed index from key as app._id should be unique
             <li
-              key={index}
+              key={app._id} // Use app._id as key for better performance and uniqueness
               className="border p-4 rounded shadow-md bg-white"
             >
-              <p><strong>Doctor:</strong> {app.doctor?.name || app.doctorName}</p>
-              <p><strong>Patient:</strong> {app.patientName}</p>
+              <p><strong>Doctor:</strong> {app.doctorId?.fullName || 'N/A'}</p>
+              <p><strong>Patient:</strong> {app.patientId?.fullName || 'N/A'}</p>
               <p><strong>Date:</strong> {app.date}</p>
               <p><strong>Time:</strong> {app.time}</p>
             </li>
