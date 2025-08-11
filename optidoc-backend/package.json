@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "create-admin": "node createAdmin.js"
   },
   "keywords": [],
   "author": "",
@@ -17,10 +19,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  },
-  "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js"
-}
- 
+  }
 }
