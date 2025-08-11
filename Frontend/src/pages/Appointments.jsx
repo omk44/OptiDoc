@@ -1,52 +1,44 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // Import useAuth hook
+import { useAuth } from "../context/AuthContext";
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user || !user._id) return setAppointments([]);
+
     const fetchAppointments = async () => {
-      // Only fetch if user is available
-      if (!user || !user._id) { // Ensure user and user._id exist
-        setAppointments([]); // Clear appointments if no user
-        return;
-      }
-
       try {
-        let res;
-        // Construct the base URL for appointments API
         const baseUrl = "http://localhost:5000/api/appointments";
-
-        if (user.role === "patient") {
-          res = await axios.get(`${baseUrl}/patient/${user._id}`);
-        } else if (user.role === "doctor") {
-          res = await axios.get(`${baseUrl}/doctor/${user._id}`);
-        } else if (user.role === "admin") {
-          res = await axios.get(baseUrl); // Admin gets all appointments
-        }
+        let res;
         
-        // Ensure response data is an array before setting state
-        if (res && Array.isArray(res.data)) {
-          setAppointments(res.data);
-        } else {
-          setAppointments([]); // Set to empty array if data is not as expected
-          console.warn("API response for appointments was not an array:", res.data);
-        }
+        if (user.role === "patient")
+          res = await axios.get(`${baseUrl}/patient/${user._id}`);
+        else if (user.role === "doctor")
+          res = await axios.get(`${baseUrl}/doctor/${user._id}`);
+        else if (user.role === "admin")
+          res = await axios.get(baseUrl);
 
+        const sorted = (res.data || []).sort((a, b) => {
+          const timeA = new Date(`${a.date} ${a.time}`);
+          const timeB = new Date(`${b.date} ${b.time}`);
+          return timeA - timeB;
+        });
+
+        setAppointments(sorted);
       } catch (err) {
         console.error("Error fetching appointments:", err);
-        setAppointments([]); // Clear appointments on error
+        setAppointments([]);
       }
     };
 
     fetchAppointments();
-  }, [user]); // Re-run effect when user changes
+  }, [user]);
 
-  if (!user) {
+  if (!user)
     return <p className="p-4 text-red-600">Please login to view appointments.</p>;
-  }
 
   return (
     <div className="p-6">
@@ -56,9 +48,9 @@ export default function Appointments() {
         <p>No appointments found.</p>
       ) : (
         <ul className="space-y-4">
-          {appointments.map((app) => ( // Removed index from key as app._id should be unique
+          {appointments.map((app) => (
             <li
-              key={app._id} // Use app._id as key for better performance and uniqueness
+              key={app._id}
               className="border p-4 rounded shadow-md bg-white"
             >
               <p><strong>Doctor:</strong> {app.doctorId?.fullName || 'N/A'}</p>
