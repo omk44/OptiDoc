@@ -53,4 +53,35 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// 🔹 Get current user from DB (lightweight session check)
+//    Query params: ?id=<mongodbId>&role=<patient|doctor|admin>
+router.get("/me", async (req, res) => {
+  try {
+    const { id, role } = req.query;
+    if (!id || !role) {
+      return res.status(400).json({ message: "Missing id or role" });
+    }
+
+    let user;
+    if (role === "patient") {
+      user = await Patient.findById(id);
+    } else if (role === "doctor") {
+      user = await Doctor.findById(id);
+    } else if (role === "admin") {
+      user = await Admin.findById(id);
+    } else {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ user });
+  } catch (error) {
+    console.error("/me error:", error);
+    res.status(500).json({ message: "Failed to load current user", error: error.message });
+  }
+});
+
 module.exports = router;
