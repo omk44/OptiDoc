@@ -6,25 +6,31 @@ import Signup from "./pages/Signup";
 import AllDoctors from "./pages/AllDoctors";
 import BookingForm from "./pages/BookingForm";
 import Appointments from "./pages/Appointments";
-import PatientDashboard from "./pages/patient/PatientDashboard";
-import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
-  const { user } = useAuth(); // get user from AuthContext
+  const { user } = useAuth();
+
+  // If user is admin, redirect to admin dashboard
+  if (user && user.role === 'admin') {
+    return (
+      <Routes>
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
       <Route element={<Layout />}>
-        {/* Redirect root `/` to /login if not logged in */}
         <Route
           index
           element={user ? <Home /> : <Navigate to="/login" replace />}
         />
 
-        {/* Public Routes */}
         <Route
           path="/login"
           element={user ? <Navigate to="/" replace /> : <Login />}
@@ -33,16 +39,9 @@ function App() {
           path="/signup"
           element={user ? <Navigate to="/" replace /> : <Signup />}
         />
-        <Route path="/doctors" element={<AllDoctors />} />
-
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/book" element={<BookingForm />} />
-          <Route path="/appointments" element={<Appointments />} />
-          <Route path="/patient-dashboard" element={<PatientDashboard />} />
-          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        </Route>
+        <Route path="/doctors" element={user ? <AllDoctors /> : <Navigate to="/login" replace />} />
+        <Route path="/book" element={user ? <BookingForm /> : <Navigate to="/login" replace />} />
+        <Route path="/appointments" element={user ? <Appointments /> : <Navigate to="/login" replace />} />
       </Route>
     </Routes>
   );
