@@ -9,6 +9,10 @@ import Appointments from "./pages/Appointments";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import AboutUs from "./pages/AboutUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Profile from "./pages/Profile";
 
 function App() {
   const { user } = useAuth();
@@ -42,6 +46,10 @@ function App() {
         <Route path="/doctors" element={user ? <AllDoctors /> : <Navigate to="/login" replace />} />
         <Route path="/book" element={user ? <BookingForm /> : <Navigate to="/login" replace />} />
         <Route path="/appointments" element={user ? <Appointments /> : <Navigate to="/login" replace />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
       </Route>
     </Routes>
   );
