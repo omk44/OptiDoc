@@ -84,4 +84,32 @@ router.get("/me", async (req, res) => {
   }
 });
 
+// Update Patient by ID
+router.put("/patients/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedPatient = await Patient.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedPatient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+    res.json({ message: "Patient updated successfully", patient: updatedPatient });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update patient", error: error.message });
+  }
+});
+
+// Update Admin by ID
+router.put("/admins/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedAdmin = await Admin.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedAdmin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    res.json({ message: "Admin updated successfully", admin: updatedAdmin });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update admin", error: error.message });
+  }
+});
+
 module.exports = router;
