@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import aboutImg from "../assets/about.png";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -115,6 +116,14 @@ export default function Navbar() {
                     {user.role}
                   </div>
                 </div>
+                <Link to="/profile" className="ml-2">
+                  <img
+          src={aboutImg}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full border-2 border-blue-400 hover:scale-110 transition-transform"
+                    title="Profile"
+                  />
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
