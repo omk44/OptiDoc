@@ -3,8 +3,8 @@ export default function DoctorCard({ doctor, onBook }) {
   return (
     <div className="bg-white shadow-md p-4 rounded-lg w-72">
       <img
-        src={doctor.localImage} // Use doctor.localImage for the image source
-        alt={doctor.fullName} // Use doctor.fullName for alt text
+        src={doctor.imageUrl || 'https://placehold.co/288x192/cccccc/ffffff?text=Doctor'}
+        alt={doctor.fullName}
         className="w-full h-48 object-cover rounded"
       />
       <h3 className="text-xl font-semibold mt-4">{doctor.fullName}</h3> {/* Use doctor.fullName */}
