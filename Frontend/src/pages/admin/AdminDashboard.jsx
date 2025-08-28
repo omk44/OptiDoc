@@ -36,6 +36,7 @@ const AdminDashboard = () => {
     specialty: '',
     imageUrl: ''
   });
+  const [newDoctorFile, setNewDoctorFile] = useState(null);
 
   // State for Edit Doctor Modal
   const [editingDoctor, setEditingDoctor] = useState(null);
@@ -46,6 +47,7 @@ const AdminDashboard = () => {
     specialty: '',
     imageUrl: ''
   });
+  const [editDoctorFile, setEditDoctorFile] = useState(null);
 
   // State for Edit Appointment Modal
   const [editingAppointment, setEditingAppointment] = useState(null);
@@ -93,6 +95,9 @@ const AdminDashboard = () => {
   const handleNewDoctorChange = (e) => {
     setNewDoctorData({ ...newDoctorData, [e.target.name]: e.target.value });
   };
+  const handleNewDoctorFileChange = (e) => {
+    setNewDoctorFile(e.target.files?.[0] || null);
+  };
 
   const handleAddDoctorSubmit = async (e) => {
     e.preventDefault();
@@ -102,9 +107,17 @@ const AdminDashboard = () => {
         alert("Please fill all required fields for the new doctor.");
         return;
       }
-      const response = await api.post("/appointments/doctors", newDoctorData);
+      const form = new FormData();
+      form.append('fullName', newDoctorData.fullName);
+      form.append('username', newDoctorData.username);
+      form.append('email', newDoctorData.email);
+      form.append('password', newDoctorData.password);
+      form.append('specialty', newDoctorData.specialty);
+      if (newDoctorFile) form.append('image', newDoctorFile);
+      const response = await api.post("/appointments/doctors", form);
       alert(response.data.message);
       setNewDoctorData({ fullName: '', username: '', email: '', password: '', specialty: '', imageUrl: '' });
+      setNewDoctorFile(null);
       setShowAddDoctorForm(false);
       fetchData();
     } catch (error) {
@@ -127,6 +140,9 @@ const AdminDashboard = () => {
   const handleEditDoctorChange = (e) => {
     setEditDoctorFormData({ ...editDoctorFormData, [e.target.name]: e.target.value });
   };
+  const handleEditDoctorFileChange = (e) => {
+    setEditDoctorFile(e.target.files?.[0] || null);
+  };
 
   const handleEditDoctorSubmit = async (e) => {
     e.preventDefault();
@@ -135,9 +151,16 @@ const AdminDashboard = () => {
         alert("Please fill all required fields for doctor details.");
         return;
       }
-      const response = await api.put(`/appointments/doctors/${editingDoctor._id}`, editDoctorFormData);
+      const form = new FormData();
+      form.append('fullName', editDoctorFormData.fullName);
+      form.append('username', editDoctorFormData.username);
+      form.append('email', editDoctorFormData.email);
+      form.append('specialty', editDoctorFormData.specialty);
+      if (editDoctorFile) form.append('image', editDoctorFile);
+      const response = await api.put(`/appointments/doctors/${editingDoctor._id}`, form);
       alert(response.data.message);
       setEditingDoctor(null);
+      setEditDoctorFile(null);
       fetchData();
     } catch (error) {
       console.error("Error updating doctor:", error.response?.data || error.message);
@@ -304,6 +327,12 @@ const AdminDashboard = () => {
                 onChange={handleNewDoctorChange}
                 className="w-full p-2 border rounded"
               />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleNewDoctorFileChange}
+                className="w-full p-2 border rounded"
+              />
               <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
@@ -456,6 +485,12 @@ const AdminDashboard = () => {
                   placeholder="Image URL"
                   value={editDoctorFormData.imageUrl}
                   onChange={handleEditDoctorChange}
+                  className="w-full p-2 border rounded"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditDoctorFileChange}
                   className="w-full p-2 border rounded"
                 />
                 <div className="flex justify-end space-x-4">
