@@ -3,26 +3,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Re-import all your local doctor images
-import doc1 from "../assets/doctor1.png";
-import doc2 from "../assets/doctor2.png";
-import doc3 from "../assets/doctor3.png";
-import doc4 from "../assets/doctor4.png";
-import doc5 from "../assets/doctor5.png";
-import doc6 from "../assets/doctor6.png";
-import doc7 from "../assets/doctor7.png";
-import doc8 from "../assets/doctor8.png";
-import doc9 from "../assets/doctor9.png";
-import doc10 from "../assets/doctor10.png";
-import doc11 from "../assets/doctor11.png";
-import doc12 from "../assets/doctor12.png";
-
-// Create a mapping object for easy access to images by a simple ID or index
-const localDoctorImages = [
-  doc1, doc2, doc3, doc4, doc5, doc6,
-  doc7, doc8, doc9, doc10, doc11, doc12
-];
-
 export default function AllDoctors() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,15 +17,8 @@ export default function AllDoctors() {
         setError(null);
 
         const response = await axios.get("http://localhost:5000/api/appointments/doctors");
-        
-        // Assign a localImageIndex to each doctor based on their order in the fetched array
-        const doctorsWithImages = response.data.map((doctor, index) => ({
-          ...doctor,
-          // Use the local image if available, otherwise fall back to a placeholder
-          localImage: localDoctorImages[index] || `https://placehold.co/128x128/cccccc/ffffff?text=${doctor.fullName.split(' ').map(n => n[0]).join('')}`
-        }));
-        
-        setDoctors(doctorsWithImages);
+        // Backend already provides imageUrl or we will fallback in the UI
+        setDoctors(response.data);
       } catch (err) {
         console.error("Error fetching doctors:", err);
         setError("Failed to load doctors. Please try again later.");
@@ -126,11 +99,7 @@ export default function AllDoctors() {
                 key={doctor._id}
                 className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300"
               >
-                <img
-                  src={doctor.localImage}
-                  alt={doctor.fullName}
-                  className="w-32 h-32 object-cover rounded-full mb-4 border-4 border-blue-100"
-                />
+                <Avatar fullName={doctor.fullName} imageUrl={doctor.imageUrl} />
                 <h3 className="text-lg font-bold text-gray-800 mb-2">{doctor.fullName}</h3>
                 <p className="text-sm text-blue-600 font-medium mb-3">{doctor.specialty}</p>
                 <button
@@ -155,11 +124,7 @@ export default function AllDoctors() {
                 key={doctor._id}
                 className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300"
               >
-                <img
-                  src={doctor.localImage}
-                  alt={doctor.fullName}
-                  className="w-32 h-32 object-cover rounded-full mb-4 border-4 border-blue-100"
-                />
+                <Avatar fullName={doctor.fullName} imageUrl={doctor.imageUrl} />
                 <h3 className="text-lg font-bold text-gray-800 mb-2">{doctor.fullName}</h3>
                 <p className="text-sm text-blue-600 font-medium mb-3">{doctor.specialty}</p>
                 <button
@@ -185,6 +150,34 @@ export default function AllDoctors() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function Avatar({ fullName, imageUrl }) {
+  const [failed, setFailed] = React.useState(false);
+  const initials = (fullName || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => (w[0] || '').toUpperCase())
+    .join('') || 'DR';
+
+  if (imageUrl && !failed) {
+    const src = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    return (
+      <img
+        src={src}
+        alt={fullName}
+        onError={() => setFailed(true)}
+        className="w-32 h-32 object-cover rounded-full mb-4 border-4 border-blue-100"
+      />
+    );
+  }
+
+  return (
+    <div className="w-32 h-32 rounded-full mb-4 border-4 border-blue-100 bg-indigo-100 flex items-center justify-center">
+      <span className="text-3xl font-bold text-indigo-700">{initials}</span>
     </div>
   );
 }
