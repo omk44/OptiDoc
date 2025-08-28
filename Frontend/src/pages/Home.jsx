@@ -4,26 +4,6 @@ import axios from 'axios'; // Import axios for making API requests
 import { useNavigate } from 'react-router-dom';
 import DoctorCard from '../components/DoctorCard';
 
-// Re-import all your local doctor images
-import doctor1 from '../assets/doctor1.png';
-import doctor2 from '../assets/doctor2.png';
-import doctor3 from '../assets/doctor3.png';
-import doctor4 from '../assets/doctor4.png';
-import doctor5 from '../assets/doctor5.png';
-import doctor6 from '../assets/doctor6.png';
-import doctor7 from '../assets/doctor7.png';
-import doctor8 from '../assets/doctor8.png';
-import doctor9 from '../assets/doctor9.png';
-import doctor10 from '../assets/doctor10.png';
-import doctor11 from '../assets/doctor11.png';
-import doctor12 from '../assets/doctor12.png';
-
-// Create a mapping array for easy access to images by index
-const localDoctorImages = [
-  doctor1, doctor2, doctor3, doctor4, doctor5, doctor6,
-  doctor7, doctor8, doctor9, doctor10, doctor11, doctor12
-];
-
 export default function Home() {
   const [doctors, setDoctors] = useState([]); // State to store doctors fetched from API
   const [loading, setLoading] = useState(true); // State to manage loading status
@@ -36,16 +16,9 @@ export default function Home() {
         setLoading(true); // Set loading to true before fetching
         setError(null); // Clear any previous errors
 
-        // Make an API call to your backend to get the list of doctors
-        const response = await axios.get("http://localhost:5000/api/appointments/doctors");
-        
-        // Assign a localImage to each doctor based on their order in the fetched array
-        const doctorsWithImages = response.data.map((doctor, index) => ({
-          ...doctor,
-          // Use the local image if available, otherwise fall back to a placeholder
-          localImage: localDoctorImages[index] || `https://placehold.co/128x128/cccccc/ffffff?text=${doctor.fullName.split(' ').map(n => n[0]).join('')}`
-        }));
-        setDoctors(doctorsWithImages); // Update state with fetched doctors
+        // Fetch top doctors from backend (sorted by number of appointments)
+        const response = await axios.get("http://localhost:5000/api/appointments/doctors/top?limit=3");
+        setDoctors(response.data);
       } catch (err) {
         console.error("Error fetching doctors for Home page:", err);
         setError("Failed to load top doctors. Please try again later."); // Set error message
@@ -90,16 +63,55 @@ export default function Home() {
           {doctors.length === 0 ? (
             <p className="text-gray-600">No top doctors available at the moment.</p>
           ) : (
-            doctors.slice(0, 3).map((doctor) => ( // Display only the first 3 doctors as "top doctors"
-              <DoctorCard
-                key={doctor._id} // Use MongoDB _id as key
-                doctor={doctor}
-                onBook={() => handleBook(doctor)}
-              />
-            ))
+            doctors.slice(0, 3).map((doctor) => {
+              return (
+                <div
+                  key={doctor._id}
+                  className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300 w-72"
+                >
+                  <Avatar fullName={doctor.fullName} imageUrl={doctor.imageUrl} />
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">{doctor.fullName}</h3>
+                  <p className="text-sm text-blue-600 font-medium mb-3">{doctor.specialty}</p>
+                  <button
+                    onClick={() => handleBook(doctor)}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium w-full"
+                  >
+                    Book Appointment
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Avatar({ fullName, imageUrl }) {
+  const [failed, setFailed] = useState(false);
+  const initials = (fullName || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => (w[0] || '').toUpperCase())
+    .join('') || 'DR';
+
+  if (imageUrl && !failed) {
+    const src = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    return (
+      <img
+        src={src}
+        alt={fullName}
+        onError={() => setFailed(true)}
+        className="w-32 h-32 object-cover rounded-full mb-4 border-4 border-blue-100"
+      />
+    );
+  }
+
+  return (
+    <div className="w-32 h-32 rounded-full mb-4 border-4 border-blue-100 bg-indigo-100 flex items-center justify-center">
+      <span className="text-3xl font-bold text-indigo-700">{initials}</span>
     </div>
   );
 }
