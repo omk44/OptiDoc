@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require("bcryptjs");
 
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
@@ -38,14 +39,17 @@ router.post("/login", async (req, res) => {
   try {
     let user;
     if (role === "patient") {
-      user = await Patient.findOne({ username, password });
+      user = await Patient.findOne({ username });
     } else if (role === "doctor") {
-      user = await Doctor.findOne({ username, password });
+      user = await Doctor.findOne({ username });
     } else if (role === "admin") {
-      user = await Admin.findOne({ username, password });
+      user = await Admin.findOne({ username });
     }
 
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
     res.status(200).json({ message: "Login successful", user });
   } catch (error) {
