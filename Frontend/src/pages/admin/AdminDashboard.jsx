@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import Footer from "../../components/Footer";
+import NotificationDropdown from "../../components/NotificationDropdown";
 
 // Helper function to generate time slots
 const generateTimeSlots = () => {
@@ -49,13 +50,6 @@ const AdminDashboard = () => {
   });
   const [editDoctorFile, setEditDoctorFile] = useState(null);
 
-  // State for Edit Appointment Modal
-  const [editingAppointment, setEditingAppointment] = useState(null);
-  const [editAppointmentFormData, setEditAppointmentFormData] = useState({
-    date: '',
-    time: '',
-    status: ''
-  });
 
   // Handle logout
   const handleLogout = () => {
@@ -183,32 +177,6 @@ const AdminDashboard = () => {
 
   // --- Appointment CRUD Operations ---
 
-  const startEditAppointment = async (appointment) => {
-    setEditingAppointment(appointment);
-    setEditAppointmentFormData({
-      date: appointment.date,
-      time: appointment.time,
-      status: appointment.status
-    });
-  };
-
-  const handleEditAppointmentChange = (e) => {
-    setEditAppointmentFormData({ ...editAppointmentFormData, [e.target.name]: e.target.value });
-  };
-
-  const handleEditAppointmentSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await api.put(`/appointments/${editingAppointment._id}`, editAppointmentFormData);
-      alert(response.data.message);
-      setEditingAppointment(null);
-      fetchData();
-    } catch (error) {
-      console.error("Error updating appointment:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Failed to update appointment.");
-    }
-  };
-
   const deleteAppointment = async (id) => {
     try {
       if (window.confirm("Are you sure you want to delete this appointment?")) {
@@ -245,6 +213,10 @@ const AdminDashboard = () => {
               <div className="text-gray-600 text-sm">
                 Logged in as: <span className="font-semibold text-blue-600">{user?.username}</span>
               </div>
+              
+              {/* Notifications */}
+              <NotificationDropdown />
+              
               <button
                 onClick={handleLogout}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 flex items-center space-x-2"
@@ -404,7 +376,7 @@ const AdminDashboard = () => {
                     <th className="py-3 px-6 text-left">Date</th>
                     <th className="py-3 px-6 text-left">Time</th>
                     <th className="py-3 px-6 text-left">Status</th>
-                    <th className="py-3 px-6 text-center">Actions</th>
+                    <th className="py-3 px-6 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-600 text-sm font-light">
@@ -416,12 +388,6 @@ const AdminDashboard = () => {
                       <td className="py-3 px-6 text-left">{appt.time}</td>
                       <td className="py-3 px-6 text-left">{appt.status}</td>
                       <td className="py-3 px-6 text-center">
-                        <button
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 mr-2"
-                          onClick={() => startEditAppointment(appt)}
-                        >
-                          Edit
-                        </button>
                         <button
                           className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
                           onClick={() => deleteAppointment(appt._id)}
@@ -513,68 +479,6 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Edit Appointment Modal */}
-        {editingAppointment && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-              <h3 className="text-2xl font-bold mb-4">Edit Appointment</h3>
-              <form onSubmit={handleEditAppointmentSubmit} className="space-y-4">
-                <label htmlFor="edit-appointment-date" className="block mb-1 font-semibold">Date</label>
-                <input
-                  id="edit-appointment-date"
-                  type="date"
-                  name="date"
-                  value={editAppointmentFormData.date}
-                  onChange={handleEditAppointmentChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-                <label htmlFor="edit-appointment-time" className="block mb-1 font-semibold">Time</label>
-                <select
-                  id="edit-appointment-time"
-                  name="time"
-                  value={editAppointmentFormData.time}
-                  onChange={handleEditAppointmentChange}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="">Select Time</option>
-                  {allTimeSlots.map(slot => (
-                    <option key={slot} value={slot}>{slot}</option>
-                  ))}
-                </select>
-                <label htmlFor="edit-appointment-status" className="block mb-1 font-semibold">Status</label>
-                <select
-                  id="edit-appointment-status"
-                  name="status"
-                  value={editAppointmentFormData.status}
-                  onChange={handleEditAppointmentChange}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="booked">Booked</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditingAppointment(null)}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Footer */}
