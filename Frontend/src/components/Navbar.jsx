@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import aboutImg from "../assets/about.png";
+import NotificationDropdown from "./NotificationDropdown";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -76,6 +77,18 @@ export default function Navbar() {
                     Admin Dashboard
                   </Link>
                 )}
+                {user.role === 'doctor' && (
+                  <Link
+                    to="/doctor-dashboard"
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                      isActive("/doctor-dashboard")
+                        ? "bg-blue-600 text-white shadow-lg"
+                        : "text-gray-300 hover:text-white hover:bg-gray-800"
+                    }`}
+                  >
+                    Doctor Dashboard
+                  </Link>
+                )}
               </>
             ) : (
               <>
@@ -116,9 +129,13 @@ export default function Navbar() {
                     {user.role}
                   </div>
                 </div>
+                
+                {/* Notifications */}
+                <NotificationDropdown />
+                
                 <Link to="/profile" className="ml-2">
                   <img
-          src={aboutImg}
+                    src={aboutImg}
                     alt="Profile"
                     className="w-8 h-8 rounded-full border-2 border-blue-400 hover:scale-110 transition-transform"
                     title="Profile"
@@ -185,6 +202,18 @@ export default function Navbar() {
                   }`}
                 >
                   Admin Dashboard
+                </Link>
+              )}
+              {user.role === 'doctor' && (
+                <Link
+                  to="/doctor-dashboard"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    isActive("/doctor-dashboard")
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700"
+                  }`}
+                >
+                  Doctor Dashboard
                 </Link>
               )}
             </>
