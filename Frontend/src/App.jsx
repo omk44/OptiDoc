@@ -7,6 +7,7 @@ import AllDoctors from "./pages/AllDoctors";
 import BookingForm from "./pages/BookingForm";
 import Appointments from "./pages/Appointments";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import AboutUs from "./pages/AboutUs";
@@ -23,6 +24,16 @@ function App() {
       <Routes>
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
+      </Routes>
+    );
+  }
+
+  // If user is doctor, redirect to doctor dashboard
+  if (user && user.role === 'doctor') {
+    return (
+      <Routes>
+        <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+        <Route path="*" element={<Navigate to="/doctor-dashboard" replace />} />
       </Routes>
     );
   }
