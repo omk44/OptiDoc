@@ -26,7 +26,12 @@ const AdminDashboard = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [editAdminMode, setEditAdminMode] = useState(false);
+  const [adminForm, setAdminForm] = useState(user || {});
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState("");
+  const [adminSuccess, setAdminSuccess] = useState("");
+  const [adminPasswords, setAdminPasswords] = useState({ new: '', confirm: '' });
   // State for Add Doctor Form
   const [showAddDoctorForm, setShowAddDoctorForm] = useState(false);
   const [newDoctorData, setNewDoctorData] = useState({
@@ -46,7 +51,8 @@ const AdminDashboard = () => {
     username: '',
     email: '',
     specialty: '',
-    imageUrl: ''
+    imageUrl: '',
+    password: ''
   });
   const [editDoctorFile, setEditDoctorFile] = useState(null);
 
@@ -84,6 +90,49 @@ const AdminDashboard = () => {
     }
   };
 
+
+  // handle admin form changes 
+  const handleAdminChange = (e) => {
+  setAdminForm({ ...adminForm, [e.target.name]: e.target.value });
+};
+
+const handleAdminPasswordChange = (e) => {
+  setAdminPasswords({ ...adminPasswords, [e.target.name]: e.target.value });
+};
+
+// handle admin save
+
+const handleAdminSave = async () => {
+  setAdminLoading(true);
+  setAdminError("");
+  setAdminSuccess("");
+  if (editAdminMode && (adminPasswords.new || adminPasswords.confirm)) {
+    if (!adminPasswords.new || !adminPasswords.confirm) {
+      setAdminError("New password fields cannot be empty.");
+      setAdminLoading(false);
+      return;
+    }
+    if (adminPasswords.new !== adminPasswords.confirm) {
+      setAdminError("New passwords do not match.");
+      setAdminLoading(false);
+      return;
+    }
+  }
+  try {
+    const payload = { ...adminForm };
+    if (adminPasswords.new) payload.password = adminPasswords.new;
+    const { data } = await api.put(`/auth/admins/${user._id}`, payload);
+    const updatedAdmin = data.admin || adminForm;
+    setAdminForm(updatedAdmin);
+    setEditAdminMode(false);
+    setAdminPasswords({ new: '', confirm: '' });
+    setAdminSuccess("Admin profile updated successfully!");
+  } catch (err) {
+    setAdminError(err.response?.data?.message || err.message || "Failed to update admin profile.");
+  } finally {
+    setAdminLoading(false);
+  }
+};
   // --- Doctor CRUD Operations ---
 
   const handleNewDoctorChange = (e) => {
@@ -149,6 +198,9 @@ const AdminDashboard = () => {
       form.append('fullName', editDoctorFormData.fullName);
       form.append('username', editDoctorFormData.username);
       form.append('email', editDoctorFormData.email);
+      if (editDoctorFormData.password) {
+      form.append('password', editDoctorFormData.password); // Only send if filled
+    }
       form.append('specialty', editDoctorFormData.specialty);
       if (editDoctorFile) form.append('image', editDoctorFile);
       const response = await api.put(`/appointments/doctors/${editingDoctor._id}`, form);
@@ -198,6 +250,7 @@ const AdminDashboard = () => {
   if (error) return <div className="p-6 text-center text-red-600">Error: {error}</div>;
 
   return (
+
     <div className="min-h-screen bg-gray-50">
       {/* Header with Admin Info and Logout */}
       <div className="bg-white shadow-lg border-b border-gray-200">
@@ -233,6 +286,97 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
+        <section className="mb-12 bg-white shadow-lg rounded-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 text-gray-700">Edit Admin Profile</h2>
+        {adminError && <div className="text-red-600 mb-2">{adminError}</div>}
+        {adminSuccess && <div className="text-green-600 mb-2">{adminSuccess}</div>}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={adminForm.fullName || ""}
+              onChange={handleAdminChange}
+              disabled={!editAdminMode}
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={adminForm.email || ""}
+              onChange={handleAdminChange}
+              disabled={!editAdminMode}
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium">Username</label>
+            <input
+              type="text"
+              name="username"
+              value={adminForm.username || ""}
+              onChange={handleAdminChange}
+              disabled={!editAdminMode}
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          {editAdminMode && (
+            <div className="mt-4 p-4 border rounded bg-gray-50">
+              <h3 className="text-lg font-semibold mb-4 text-blue-700">Change Password</h3>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium">New Password</label>
+                <input
+                  type="password"
+                  name="new"
+                  value={adminPasswords.new}
+                  onChange={handleAdminPasswordChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium">Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirm"
+                  value={adminPasswords.confirm}
+                  onChange={handleAdminPasswordChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end mt-6 space-x-4">
+          {editAdminMode ? (
+            <>
+              <button
+                onClick={handleAdminSave}
+                disabled={adminLoading}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {adminLoading ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={() => { setEditAdminMode(false); setAdminForm(user); setAdminError(""); setAdminSuccess(""); setAdminPasswords({ new: '', confirm: '' }); }}
+                className="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditAdminMode(true)}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Edit Profile
+            </button>
+          )}
+        </div>
+      </section>
         {/* Add Doctor Section */}
         <section className="mb-12 bg-white shadow-lg rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4 text-gray-700">Manage Doctors</h2>
@@ -435,6 +579,14 @@ const AdminDashboard = () => {
                   onChange={handleEditDoctorChange}
                   className="w-full p-2 border rounded"
                   required
+                />
+                  <input
+                  type="password"
+                  name="password"
+                  placeholder="Change Password (leave blank to keep current)"
+                  value={editDoctorFormData.password}
+                  onChange={handleEditDoctorChange}
+                  className="w-full p-2 border rounded"
                 />
                 <input
                   type="text"
