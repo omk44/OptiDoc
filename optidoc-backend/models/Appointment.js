@@ -29,7 +29,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["booked", "notbooked"],
+  enum: ["booked", "completed", "canceled", "pending", "cleared", "delayed", "rescheduled"], // Add all needed statuses
     default: "notbooked",
   },
 });
