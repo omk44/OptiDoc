@@ -5,6 +5,7 @@ const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const Notification = require("../models/Notification");
 const { upload } = require("../middlewares/upload"); // ✅ CommonJS
+const bcrypt = require("bcryptjs"); // Make sure this is imported
 
 // Helper function to create notifications
 const createNotification = async (recipientId, recipientRole, senderId, senderRole, senderName, appointmentId, type, title, message, appointmentDate, appointmentTime) => {
@@ -305,6 +306,12 @@ router.put("/doctors/:id", upload.single("image"), async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+
+    // Hash password if provided
+    if (updateData.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
 
     if (req.file) {
       updateData.image = {

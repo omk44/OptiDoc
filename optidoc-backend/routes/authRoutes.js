@@ -92,7 +92,15 @@ router.get("/me", async (req, res) => {
 router.put("/patients/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedPatient = await Patient.findByIdAndUpdate(id, req.body, { new: true });
+    const updateData = req.body;
+
+    // Hash password if provided
+    if (updateData.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
+
+    const updatedPatient = await Patient.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedPatient) {
       return res.status(404).json({ message: "Patient not found" });
     }
@@ -106,7 +114,15 @@ router.put("/patients/:id", async (req, res) => {
 router.put("/admins/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedAdmin = await Admin.findByIdAndUpdate(id, req.body, { new: true });
+    const updateData = req.body;
+
+    // Hash password if provided
+    if (updateData.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedAdmin) {
       return res.status(404).json({ message: "Admin not found" });
     }
