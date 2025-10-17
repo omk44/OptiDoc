@@ -140,8 +140,8 @@ export default function AboutUs() {
                 </svg>
               </div>
               <h3 className="font-bold text-gray-800 mb-2">Email</h3>
-              <a href="mailto:omkapadiya47@gmail.com" className="text-blue-600 hover:text-blue-700 transition-colors">
-                omkapadiya47@gmail.com
+              <a href="mailto:optidoc416@gmail.com" className="text-blue-600 hover:text-blue-700 transition-colors">
+                optidoc416@gmail.com
               </a>
             </div>
             <div className="text-center">
@@ -174,7 +174,7 @@ export default function AboutUs() {
 
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t border-gray-200">
-          <p className="text-gray-500">© 2024 OptiDoc. All rights reserved.</p>
+          <p className="text-gray-500">© 2025 OptiDoc. All rights reserved.</p>
         </div>
       </div>
     </div>

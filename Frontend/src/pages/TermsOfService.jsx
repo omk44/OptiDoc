@@ -144,13 +144,13 @@ export default function TermsOfService() {
                 For any questions or concerns regarding these terms, please don't hesitate to contact us:
               </p>
               <a 
-                href="mailto:omkapadiya47@gmail.com" 
+                href="mailto:optidoc416@gmail.com" 
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                omkapadiya47@gmail.com
+                optidoc416@gmail.com
               </a>
             </div>
           </div>
@@ -158,8 +158,8 @@ export default function TermsOfService() {
 
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t border-gray-200">
-          <p className="text-gray-500 mb-2">Last Updated: January 2024</p>
-          <p className="text-gray-500">© 2024 OptiDoc. All rights reserved.</p>
+          <p className="text-gray-500 mb-2">Last Updated: October 2025</p>
+          <p className="text-gray-500">© 2025 OptiDoc. All rights reserved.</p>
         </div>
       </div>
     </div>
