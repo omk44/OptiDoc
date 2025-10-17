@@ -5,17 +5,18 @@ const bcrypt = require("bcryptjs");
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Admin = require("../models/Admin");
+const { sendEmail, emailTemplates } = require("../utils/emailService");
 
 // 🔹 Patient Signup
 router.post("/signup", async (req, res) => {
-  const { fullName, email, phone, username, password,role } = req.body;
+  const { fullName, email, phone, username, password, role } = req.body;
 
   try {
     // Check if already exists
     const existing = await Patient.findOne({ email });
     if (existing) return res.status(400).json({ message: "Email already exists" });
 
-     const newPatient = new Patient({
+    const newPatient = new Patient({
       fullName,
       email,
       phone,
@@ -25,6 +26,20 @@ router.post("/signup", async (req, res) => {
     });
 
     await newPatient.save();
+
+    // Send welcome email with credentials
+    try {
+      await sendEmail(
+        email,
+        'Welcome to OptiDoc - Your Account Details',
+        emailTemplates.patientWelcome(fullName, username, password)
+      );
+      console.log('Welcome email sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail signup if email fails
+    }
+
     res.status(201).json({ message: "Signup successful", user: newPatient });
   } catch (error) {
     res.status(500).json({ message: "Signup failed", error });

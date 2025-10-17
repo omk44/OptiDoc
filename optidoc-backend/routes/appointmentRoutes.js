@@ -6,6 +6,7 @@ const Patient = require("../models/Patient");
 const Notification = require("../models/Notification");
 const { upload } = require("../middlewares/upload"); // ✅ CommonJS
 const bcrypt = require("bcryptjs"); // Make sure this is imported
+const { sendEmail, emailTemplates } = require("../utils/emailService");
 
 // Helper function to create notifications
 const createNotification = async (recipientId, recipientRole, senderId, senderRole, senderName, appointmentId, type, title, message, appointmentDate, appointmentTime) => {
@@ -73,6 +74,19 @@ router.post("/book", async (req, res) => {
       date,
       time
     );
+
+    // Send confirmation email to patient
+    try {
+      await sendEmail(
+        patient.email,
+        'Appointment Confirmed - OptiDoc',
+        emailTemplates.appointmentBooked(patient.fullName, doctor.fullName, date, time, doctor.specialty)
+      );
+      console.log('Appointment confirmation email sent to:', patient.email);
+    } catch (emailError) {
+      console.error('Failed to send appointment confirmation email:', emailError);
+      // Don't fail appointment booking if email fails
+    }
 
     res.status(201).json({ message: "Appointment booked", appointment });
   } catch (error) {
@@ -294,6 +308,20 @@ router.post("/doctors", upload.single("image"), async (req, res) => {
       newDoctor.imageUrl = undefined;
     }
     await newDoctor.save();
+
+    // Send welcome email with credentials to doctor
+    try {
+      await sendEmail(
+        email,
+        'Welcome to OptiDoc - Doctor Account Created',
+        emailTemplates.doctorWelcome(fullName, username, password, specialty)
+      );
+      console.log('Doctor welcome email sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send doctor welcome email:', emailError);
+      // Don't fail doctor creation if email fails
+    }
+
     res.status(201).json({ message: "Doctor added successfully", doctor: newDoctor });
   } catch (error) {
     console.error("Error adding doctor:", error);
@@ -306,6 +334,7 @@ router.put("/doctors/:id", upload.single("image"), async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const passwordChanged = !!updateData.password;
 
     // Hash password if provided
     if (updateData.password) {
@@ -325,6 +354,25 @@ router.put("/doctors/:id", upload.single("image"), async (req, res) => {
     if (!updatedDoctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
+
+    // Send email notification to doctor about profile update
+    try {
+      await sendEmail(
+        updatedDoctor.email,
+        'Profile Updated - OptiDoc',
+        emailTemplates.doctorProfileUpdated(
+          updatedDoctor.fullName,
+          updatedDoctor.username,
+          updatedDoctor.specialty,
+          passwordChanged
+        )
+      );
+      console.log('Doctor profile update email sent to:', updatedDoctor.email);
+    } catch (emailError) {
+      console.error('Failed to send doctor profile update email:', emailError);
+      // Don't fail update if email fails
+    }
+
     res.json({ message: "Doctor updated successfully", doctor: updatedDoctor });
   } catch (error) {
     console.error("Error updating doctor:", error);
@@ -473,6 +521,27 @@ router.put("/:id/status", async (req, res) => {
         appointment.date,
         appointment.time
       );
+    }
+
+    // Send email notification to patient about status change
+    try {
+      await sendEmail(
+        patient.email,
+        `Appointment Status Update - OptiDoc`,
+        emailTemplates.appointmentStatusChanged(
+          patient.fullName,
+          doctor.fullName,
+          appointment.date,
+          appointment.time,
+          oldStatus,
+          status,
+          message
+        )
+      );
+      console.log('Appointment status change email sent to:', patient.email);
+    } catch (emailError) {
+      console.error('Failed to send appointment status change email:', emailError);
+      // Don't fail status update if email fails
     }
 
     // Return updated appointment with populated data
