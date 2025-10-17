@@ -56,6 +56,15 @@ const AdminDashboard = () => {
   });
   const [editDoctorFile, setEditDoctorFile] = useState(null);
 
+  // State for Appointment Status Update Modal
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusUpdate, setStatusUpdate] = useState({
+    status: "",
+    notes: "",
+    newDate: "",
+    newTime: ""
+  });
 
   // Handle logout
   const handleLogout = () => {
@@ -228,6 +237,40 @@ const handleAdminSave = async () => {
   };
 
   // --- Appointment CRUD Operations ---
+
+  const openStatusModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setStatusUpdate({
+      status: appointment.status,
+      notes: "",
+      newDate: appointment.date,
+      newTime: appointment.time
+    });
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdateSubmit = async () => {
+    if (!selectedAppointment || !statusUpdate.status) return;
+
+    try {
+      const response = await api.put(`/appointments/${selectedAppointment._id}/status-admin`, {
+        ...statusUpdate,
+        adminId: user._id,
+        adminName: user.fullName || user.username
+      });
+
+      if (response.status === 200) {
+        await fetchData();
+        setShowStatusModal(false);
+        setSelectedAppointment(null);
+        setStatusUpdate({ status: "", notes: "", newDate: "", newTime: "" });
+        alert("✅ Appointment status updated successfully!\n\n📧 Patient and Doctor have been notified via email about the status change.");
+      }
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      alert(error.response?.data?.message || "Failed to update appointment status");
+    }
+  };
 
   const deleteAppointment = async (id) => {
     try {
@@ -530,8 +573,24 @@ const handleAdminSave = async () => {
                       <td className="py-3 px-6 text-left whitespace-nowrap">{appt.doctorId?.fullName || 'N/A'}</td>
                       <td className="py-3 px-6 text-left">{appt.date}</td>
                       <td className="py-3 px-6 text-left">{appt.time}</td>
-                      <td className="py-3 px-6 text-left">{appt.status}</td>
+                      <td className="py-3 px-6 text-left">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          appt.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          appt.status === 'canceled' ? 'bg-red-100 text-red-800' :
+                          appt.status === 'booked' ? 'bg-blue-100 text-blue-800' :
+                          appt.status === 'rescheduled' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {appt.status}
+                        </span>
+                      </td>
                       <td className="py-3 px-6 text-center">
+                        <button
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 mr-2"
+                          onClick={() => openStatusModal(appt)}
+                        >
+                          Update Status
+                        </button>
                         <button
                           className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
                           onClick={() => deleteAppointment(appt._id)}
@@ -627,6 +686,97 @@ const handleAdminSave = async () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Status Update Modal */}
+        {showStatusModal && selectedAppointment && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">Update Appointment Status</h3>
+              
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600"><strong>Patient:</strong> {selectedAppointment.patientId?.fullName}</p>
+                <p className="text-sm text-gray-600"><strong>Doctor:</strong> {selectedAppointment.doctorId?.fullName}</p>
+                <p className="text-sm text-gray-600"><strong>Current Date:</strong> {selectedAppointment.date}</p>
+                <p className="text-sm text-gray-600"><strong>Current Time:</strong> {selectedAppointment.time}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Status</label>
+                  <select
+                    value={statusUpdate.status}
+                    onChange={(e) => setStatusUpdate({ ...statusUpdate, status: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="booked">Booked</option>
+                    <option value="completed">Completed</option>
+                    <option value="canceled">Canceled</option>
+                    <option value="rescheduled">Rescheduled</option>
+                  </select>
+                </div>
+
+                {statusUpdate.status === "rescheduled" && (
+                  <>
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">New Date</label>
+                      <input
+                        type="date"
+                        value={statusUpdate.newDate}
+                        onChange={(e) => setStatusUpdate({ ...statusUpdate, newDate: e.target.value })}
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">New Time</label>
+                      <select
+                        value={statusUpdate.newTime}
+                        onChange={(e) => setStatusUpdate({ ...statusUpdate, newTime: e.target.value })}
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                      >
+                        <option value="">Select time</option>
+                        {allTimeSlots.map((slot) => (
+                          <option key={slot} value={slot}>{slot}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Notes (Optional)</label>
+                  <textarea
+                    value={statusUpdate.notes}
+                    onChange={(e) => setStatusUpdate({ ...statusUpdate, notes: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                    rows="3"
+                    placeholder="Add any notes or reasons for the change..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => {
+                    setShowStatusModal(false);
+                    setSelectedAppointment(null);
+                    setStatusUpdate({ status: "", notes: "", newDate: "", newTime: "" });
+                  }}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStatusUpdateSubmit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Update Status
+                </button>
+              </div>
             </div>
           </div>
         )}

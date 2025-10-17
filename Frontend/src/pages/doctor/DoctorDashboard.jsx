@@ -98,9 +98,11 @@ const DoctorDashboard = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "booked": return "bg-blue-100 text-blue-800";
+      case "completed": return "bg-green-100 text-green-800";
+      case "rescheduled": return "bg-yellow-100 text-yellow-800";
+      case "canceled": return "bg-red-100 text-red-800";
       case "cleared": return "bg-green-100 text-green-800";
       case "delayed": return "bg-yellow-100 text-yellow-800";
-      case "canceled": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -335,92 +337,84 @@ const DoctorDashboard = () => {
 
         {/* Status Update Modal */}
         {showModal && selectedAppointment && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Update Appointment Status
-                </h3>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Patient: {selectedAppointment.patientId?.fullName}
-                  </label>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Date: {formatDate(selectedAppointment.date)} at {selectedAppointment.time}
-                  </label>
-                </div>
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
+            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto m-4">
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">Update Appointment Status</h3>
+              
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600"><strong>Patient:</strong> {selectedAppointment.patientId?.fullName}</p>
+                <p className="text-sm text-gray-600"><strong>Current Date:</strong> {selectedAppointment.date}</p>
+                <p className="text-sm text-gray-600"><strong>Current Time:</strong> {selectedAppointment.time}</p>
+              </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Status</label>
                   <select
                     value={statusUpdate.status}
                     onChange={(e) => setStatusUpdate({ ...statusUpdate, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
                   >
                     <option value="booked">Booked</option>
-                    <option value="cleared">Cleared/Completed</option>
-                    <option value="delayed">Delayed/Rescheduled</option>
+                    <option value="completed">Completed</option>
                     <option value="canceled">Canceled</option>
+                    <option value="rescheduled">Rescheduled</option>
                   </select>
                 </div>
 
-                {statusUpdate.status === "delayed" && (
+                {statusUpdate.status === "rescheduled" && (
                   <>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Date
-                      </label>
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">New Date</label>
                       <input
                         type="date"
                         value={statusUpdate.newDate}
                         onChange={(e) => setStatusUpdate({ ...statusUpdate, newDate: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Time
-                      </label>
+                    <div>
+                      <label className="block text-gray-700 font-semibold mb-2">New Time</label>
                       <input
                         type="time"
                         value={statusUpdate.newTime}
                         onChange={(e) => setStatusUpdate({ ...statusUpdate, newTime: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
                   </>
                 )}
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes (Optional)
-                  </label>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Notes (Optional)</label>
                   <textarea
                     value={statusUpdate.notes}
                     onChange={(e) => setStatusUpdate({ ...statusUpdate, notes: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Add any notes about this appointment..."
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                    rows="3"
+                    placeholder="Add any notes or reasons for the change..."
                   />
                 </div>
+              </div>
 
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleStatusUpdate}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Update Status
-                  </button>
-                </div>
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedAppointment(null);
+                    setStatusUpdate({ status: "", notes: "", newDate: "", newTime: "" });
+                  }}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStatusUpdate}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Update Status
+                </button>
               </div>
             </div>
           </div>
