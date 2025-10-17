@@ -45,111 +45,118 @@ export default function AllDoctors() {
   };
 
   if (loading) {
-    return <p className="p-4 text-center text-lg text-blue-600">Loading doctors...</p>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-blue-600 font-semibold">Loading doctors...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="p-4 text-center text-lg text-red-600">{error}</p>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
+          <p className="text-xl text-red-600 font-semibold">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   if (doctors.length === 0) {
-    return <p className="p-4 text-center text-lg text-gray-600">No doctors available at the moment.</p>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
+          <p className="text-xl text-gray-600">No doctors available at the moment.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Our Expert Doctors</h1>
-      
-      {/* Specialty Filter */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex bg-gray-100 rounded-lg p-1">
-          <button
-            onClick={() => setSelectedSpecialty("all")}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              selectedSpecialty === "all"
-                ? "bg-blue-600 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-            }`}
-          >
-            All Specialties ({doctors.length})
-          </button>
-          {uniqueSpecialties.map((specialty) => (
-            <button
-              key={specialty}
-              onClick={() => setSelectedSpecialty(specialty)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                selectedSpecialty === specialty
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-              }`}
-            >
-              {specialty}s ({doctors.filter(doc => doc.specialty === specialty).length})
-            </button>
-          ))}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Page Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-16 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-5xl font-bold mb-4">Our Expert Doctors</h1>
+          <p className="text-xl opacity-90">Browse and book appointments with verified specialists</p>
         </div>
       </div>
 
-      {/* Show All Doctors (when "All Specialties" is selected) */}
-      {selectedSpecialty === "all" && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-600 text-center">All Doctors</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {doctors.map((doctor) => (
-              <div
-                key={doctor._id}
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300"
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Specialty filter buttons */}
+        <div className="mb-12">
+          <h3 className="text-center text-gray-700 font-semibold mb-4 text-lg">Filter by Specialty</h3>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              onClick={() => setSelectedSpecialty("all")}
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-200 shadow-md hover:shadow-lg ${
+                selectedSpecialty === "all"
+                  ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white scale-105"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              All Specialties ({doctors.length})
+            </button>
+            {uniqueSpecialties.map((specialty) => (
+              <button
+                key={specialty}
+                onClick={() => setSelectedSpecialty(specialty)}
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-200 shadow-md hover:shadow-lg ${
+                  selectedSpecialty === specialty
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white scale-105"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
               >
-                <Avatar fullName={doctor.fullName} imageUrl={doctor.imageUrl} />
-                <h3 className="text-lg font-bold text-gray-800 mb-2">{doctor.fullName}</h3>
-                <p className="text-sm text-blue-600 font-medium mb-3">{doctor.specialty}</p>
-                <button
-                  onClick={() => handleBook(doctor)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-                >
-                  Book Appointment
-                </button>
-              </div>
+                {specialty} ({doctors.filter(doc => doc.specialty === specialty).length})
+              </button>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Show Doctors by Specialty (when a specific specialty is selected) */}
-      {selectedSpecialty !== "all" && (
+        {/* Doctors Grid */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-600 text-center">{selectedSpecialty}s</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {selectedSpecialty !== "all" && (
+            <h2 className="text-3xl font-bold mb-8 text-gray-800 text-center">
+              {selectedSpecialty} Specialists
+            </h2>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {filteredDoctors.map((doctor) => (
               <div
                 key={doctor._id}
-                className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300"
+                className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100"
               >
                 <Avatar fullName={doctor.fullName} imageUrl={doctor.imageUrl} />
-                <h3 className="text-lg font-bold text-gray-800 mb-2">{doctor.fullName}</h3>
-                <p className="text-sm text-blue-600 font-medium mb-3">{doctor.specialty}</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-2 text-center">{doctor.fullName}</h3>
+                <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                  {doctor.specialty}
+                </div>
                 <button
                   onClick={() => handleBook(doctor)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                 >
-                  Book Appointment
+                  Book Appointment →
                 </button>
               </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Back to All Specialties Button */}
-      {selectedSpecialty !== "all" && (
-        <div className="text-center mt-8">
-          <button
-            onClick={() => setSelectedSpecialty("all")}
-            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium"
-          >
-            ← Back to All Specialties
-          </button>
-        </div>
-      )}
+        {/* Back to All Specialties Button */}
+        {selectedSpecialty !== "all" && (
+          <div className="text-center mt-12">
+            <button
+              onClick={() => setSelectedSpecialty("all")}
+              className="px-8 py-4 bg-gray-700 text-white rounded-xl hover:bg-gray-800 transition-colors duration-200 font-semibold shadow-lg hover:shadow-xl"
+            >
+              ← Back to All Specialties
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -170,14 +177,14 @@ function Avatar({ fullName, imageUrl }) {
         src={src}
         alt={fullName}
         onError={() => setFailed(true)}
-        className="w-32 h-32 object-cover rounded-full mb-4 border-4 border-blue-100"
+        className="w-40 h-40 object-cover rounded-full mb-6 border-4 border-blue-200 shadow-lg"
       />
     );
   }
 
   return (
-    <div className="w-32 h-32 rounded-full mb-4 border-4 border-blue-100 bg-indigo-100 flex items-center justify-center">
-      <span className="text-3xl font-bold text-indigo-700">{initials}</span>
+    <div className="w-40 h-40 rounded-full mb-6 border-4 border-blue-200 bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center shadow-lg">
+      <span className="text-4xl font-bold text-blue-700">{initials}</span>
     </div>
   );
 }
