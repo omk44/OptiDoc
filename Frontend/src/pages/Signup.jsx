@@ -78,8 +78,8 @@ function Signup() {
       if (response.ok) {
         // Show success message
         setError('');
-        alert("Signup successful! Please login.");
-        setTimeout(() => navigate("/login"), 1500);
+        alert("✅ Signup successful!\n\n📧 Your login credentials have been sent to your email address.\n\nPlease check your email and login.");
+        setTimeout(() => navigate("/login"), 2000);
       } else {
         setError(data.message || "Signup failed.");
       }

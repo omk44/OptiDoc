@@ -73,7 +73,7 @@ const DoctorDashboard = () => {
         setShowModal(false);
         setSelectedAppointment(null);
         setStatusUpdate({ status: "", notes: "", newDate: "", newTime: "" });
-        alert("Appointment status updated successfully!");
+        alert("✅ Appointment status updated successfully!\n\n📧 Patient has been notified via email about the status change.");
       } else {
         const error = await response.json();
         alert(error.message || "Failed to update appointment status");

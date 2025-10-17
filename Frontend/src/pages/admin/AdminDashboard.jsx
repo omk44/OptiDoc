@@ -158,7 +158,7 @@ const handleAdminSave = async () => {
       form.append('specialty', newDoctorData.specialty);
       if (newDoctorFile) form.append('image', newDoctorFile);
       const response = await api.post("/appointments/doctors", form);
-      alert(response.data.message);
+      alert(`${response.data.message}\n\n📧 Login credentials have been sent to the doctor's email address.`);
       setNewDoctorData({ fullName: '', username: '', email: '', password: '', specialty: '', imageUrl: '' });
       setNewDoctorFile(null);
       setShowAddDoctorForm(false);
@@ -204,7 +204,7 @@ const handleAdminSave = async () => {
       form.append('specialty', editDoctorFormData.specialty);
       if (editDoctorFile) form.append('image', editDoctorFile);
       const response = await api.put(`/appointments/doctors/${editingDoctor._id}`, form);
-      alert(response.data.message);
+      alert(`${response.data.message}\n\n📧 Doctor has been notified via email about the profile update.`);
       setEditingDoctor(null);
       setEditDoctorFile(null);
       fetchData();

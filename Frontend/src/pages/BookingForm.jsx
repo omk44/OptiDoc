@@ -120,7 +120,7 @@ export default function BookingForm() {
       const response = await axios.post("http://localhost:5000/api/appointments/book", appointmentData);
       
       if (response.status === 201) {
-        alert(`✅ Appointment booked with ${doctor.fullName} on ${formData.date} at ${formData.time}`);
+        alert(`✅ Appointment booked with ${doctor.fullName} on ${formData.date} at ${formData.time}\n\n📧 A confirmation email has been sent to your registered email address.`);
         navigate("/appointments");
       } else {
         alert(response.data.message || "❌ Failed to book appointment. Please try again.");
