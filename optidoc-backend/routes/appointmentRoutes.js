@@ -624,4 +624,156 @@ router.put("/notifications/:userId/read-all", async (req, res) => {
   }
 });
 
+// 🔹 Update Appointment Status (Admin only)
+router.put("/:id/status-admin", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes, newDate, newTime, adminId, adminName } = req.body;
+
+    const appointment = await Appointment.findById(id)
+      .populate("patientId", "fullName email")
+      .populate("doctorId", "fullName email specialty");
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const oldStatus = appointment.status;
+    const oldDate = appointment.date;
+    const oldTime = appointment.time;
+
+    // Update appointment
+    appointment.status = status;
+    if (notes) appointment.notes = notes;
+    if (newDate) appointment.date = newDate;
+    if (newTime) appointment.time = newTime;
+
+    await appointment.save();
+
+    const patient = appointment.patientId;
+    const doctor = appointment.doctorId;
+
+    // Create notification message
+    const changes = [];
+    if (oldStatus !== status) changes.push(`status: ${oldStatus} → ${status}`);
+    if (newDate && oldDate !== newDate) changes.push(`date: ${oldDate} → ${newDate}`);
+    if (newTime && oldTime !== newTime) changes.push(`time: ${oldTime} → ${newTime}`);
+    const changeMessage = changes.length > 0 ? ` (${changes.join(', ')})` : '';
+
+    let notificationType, title, message;
+
+    switch (status) {
+      case "completed":
+        notificationType = "appointment_completed";
+        title = "Appointment Completed";
+        message = `Admin has marked your appointment as completed${changeMessage}`;
+        break;
+      case "cleared":
+        notificationType = "appointment_cleared";
+        title = "Appointment Cleared";
+        message = `Admin has cleared your appointment${changeMessage}`;
+        break;
+      case "delayed":
+        notificationType = "appointment_delayed";
+        title = "Appointment Delayed";
+        message = `Admin has delayed your appointment${changeMessage}`;
+        break;
+      case "rescheduled":
+        notificationType = "appointment_rescheduled";
+        title = "Appointment Rescheduled";
+        message = `Admin has rescheduled your appointment${changeMessage}`;
+        break;
+      case "canceled":
+        notificationType = "appointment_canceled";
+        title = "Appointment Canceled";
+        message = `Admin has canceled your appointment${changeMessage}`;
+        break;
+      default:
+        notificationType = "appointment_updated";
+        title = "Appointment Updated";
+        message = `Admin has updated your appointment${changeMessage}`;
+    }
+
+    // Notify patient
+    await createNotification(
+      patient._id,
+      "patient",
+      adminId,
+      "admin",
+      adminName,
+      appointment._id,
+      notificationType,
+      title,
+      message,
+      appointment.date,
+      appointment.time
+    );
+
+    // Notify doctor
+    await createNotification(
+      doctor._id,
+      "doctor",
+      adminId,
+      "admin",
+      adminName,
+      appointment._id,
+      notificationType,
+      `Admin Updated: ${title}`,
+      `Admin ${adminName} updated appointment with ${patient.fullName}${changeMessage}`,
+      appointment.date,
+      appointment.time
+    );
+
+    // Send email to patient
+    try {
+      await sendEmail(
+        patient.email,
+        `Appointment ${title} - OptiDoc`,
+        emailTemplates.appointmentStatusChanged(
+          patient.fullName,
+          doctor.fullName,
+          appointment.date,
+          appointment.time,
+          oldStatus,
+          status,
+          `${message}\n\nChanged by: Admin (${adminName})`
+        )
+      );
+      console.log('Appointment status change email sent to patient:', patient.email);
+    } catch (emailError) {
+      console.error('Failed to send email to patient:', emailError);
+    }
+
+    // Send email to doctor
+    try {
+      await sendEmail(
+        doctor.email,
+        `Admin Updated Appointment - OptiDoc`,
+        emailTemplates.appointmentStatusChanged(
+          `Dr. ${doctor.fullName}`,
+          patient.fullName,
+          appointment.date,
+          appointment.time,
+          oldStatus,
+          status,
+          `Admin ${adminName} has updated the appointment with patient ${patient.fullName}${changeMessage}`
+        )
+      );
+      console.log('Appointment status change email sent to doctor:', doctor.email);
+    } catch (emailError) {
+      console.error('Failed to send email to doctor:', emailError);
+    }
+
+    // Return updated appointment with populated data
+    const updatedAppointmentWithDetails = await Appointment.findById(appointment._id)
+      .populate("patientId", "fullName email username")
+      .populate("doctorId", "fullName email specialty username");
+    
+    res.json({ message: "Appointment status updated by admin", appointment: updatedAppointmentWithDetails });
+  } catch (error) {
+    console.error("Error updating appointment status (admin):", error);
+    res.status(500).json({ message: "Failed to update appointment status", error: error.message });
+  }
+});
+
 module.exports = router;
