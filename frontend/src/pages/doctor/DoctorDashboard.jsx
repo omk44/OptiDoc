@@ -39,7 +39,7 @@ const DoctorDashboard = () => {
 
   const fetchAppointmentChanges = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/appointments/notifications/${user._id}?role=doctor`);
+      const response = await fetch(`http://localhost:5000/api/notifications/${user._id}?role=doctor`);
       if (response.ok) {
         const data = await response.json();
         // Get all appointment-related notifications for this doctor

@@ -33,7 +33,7 @@ const NotificationDropdown = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:5000/api/appointments/notifications/${user._id}?role=${user.role}`
+        `http://localhost:5000/api/notifications/${user._id}?role=${user.role}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -49,7 +49,7 @@ const NotificationDropdown = () => {
   const markAsRead = async (notificationId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/appointments/notifications/${notificationId}/read`,
+        `http://localhost:5000/api/notifications/${notificationId}/read`,
         { method: "PUT" }
       );
       if (response.ok) {
@@ -67,7 +67,7 @@ const NotificationDropdown = () => {
   const markAllAsRead = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/appointments/notifications/${user._id}/read-all?role=${user.role}`,
+        `http://localhost:5000/api/notifications/${user._id}/read-all?role=${user.role}`,
         { method: "PUT" }
       );
       if (response.ok) {

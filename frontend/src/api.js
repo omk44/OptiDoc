@@ -8,19 +8,19 @@ export const api = axios.create({
 export const notificationAPI = {
   // Get notifications for a user
   getNotifications: async (userId, role) => {
-    const response = await api.get(`/appointments/notifications/${userId}?role=${role}`);
+    const response = await api.get(`/notifications/${userId}?role=${role}`);
     return response.data;
   },
 
   // Mark notification as read
   markAsRead: async (notificationId) => {
-    const response = await api.put(`/appointments/notifications/${notificationId}/read`);
+    const response = await api.put(`/notifications/${notificationId}/read`);
     return response.data;
   },
 
   // Mark all notifications as read
   markAllAsRead: async (userId, role) => {
-    const response = await api.put(`/appointments/notifications/${userId}/read-all?role=${role}`);
+    const response = await api.put(`/notifications/${userId}/read-all?role=${role}`);
     return response.data;
   },
 

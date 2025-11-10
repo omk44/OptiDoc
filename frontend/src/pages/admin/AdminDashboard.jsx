@@ -79,7 +79,7 @@ const AdminDashboard = () => {
 
       const [apptRes, docRes] = await Promise.all([
         api.get("/appointments"),
-        api.get("/appointments/doctors"),
+        api.get("/doctors"),
       ]);
 
       // Sort appointments by date (newest first)
@@ -166,7 +166,7 @@ const handleAdminSave = async () => {
       form.append('password', newDoctorData.password);
       form.append('specialty', newDoctorData.specialty);
       if (newDoctorFile) form.append('image', newDoctorFile);
-      const response = await api.post("/appointments/doctors", form);
+      const response = await api.post("/doctors", form);
       alert(`${response.data.message}\n\n📧 Login credentials have been sent to the doctor's email address.`);
       setNewDoctorData({ fullName: '', username: '', email: '', password: '', specialty: '', imageUrl: '' });
       setNewDoctorFile(null);
@@ -212,7 +212,7 @@ const handleAdminSave = async () => {
     }
       form.append('specialty', editDoctorFormData.specialty);
       if (editDoctorFile) form.append('image', editDoctorFile);
-      const response = await api.put(`/appointments/doctors/${editingDoctor._id}`, form);
+      const response = await api.put(`/doctors/${editingDoctor._id}`, form);
       alert(`${response.data.message}\n\n📧 Doctor has been notified via email about the profile update.`);
       setEditingDoctor(null);
       setEditDoctorFile(null);
@@ -226,7 +226,7 @@ const handleAdminSave = async () => {
   const deleteDoctor = async (id) => {
     try {
       if (window.confirm("Are you sure you want to delete this doctor? This will also remove associated appointments.")) {
-        await api.delete(`/appointments/doctors/${id}`);
+        await api.delete(`/doctors/${id}`);
         alert("Doctor deleted successfully.");
         fetchData();
       }

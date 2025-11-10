@@ -13,15 +13,10 @@ export default function AllDoctors() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const response = await axios.get("http://localhost:5000/api/appointments/doctors");
-        // Backend already provides imageUrl or we will fallback in the UI
+        const response = await axios.get("http://localhost:5000/api/doctors");
         setDoctors(response.data);
-      } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setError("Failed to load doctors. Please try again later.");
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
       } finally {
         setLoading(false);
       }

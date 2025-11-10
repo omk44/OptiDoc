@@ -4,9 +4,9 @@ import { api } from "../api";
 import aboutImg from "../assets/about.png";
 
 const getUpdateEndpoint = (role, id) => {
-  if (role === "doctor") return `/appointments/doctors/${id}`;
-  if (role === "patient") return `/auth/patients/${id}`; // Ensure this exists in backend
-  if (role === "admin") return `/auth/admins/${id}`; // Ensure this exists in backend
+  if (role === "doctor") return `/doctors/${id}`;
+  if (role === "patient") return `/auth/patients/${id}`;
+  if (role === "admin") return `/auth/admins/${id}`;
   return null;
 };
 

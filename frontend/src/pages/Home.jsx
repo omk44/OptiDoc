@@ -11,23 +11,19 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const fetchTopDoctors = async () => {
       try {
-        setLoading(true); // Set loading to true before fetching
-        setError(null); // Clear any previous errors
-
-        // Fetch top doctors from backend (sorted by number of appointments)
-        const response = await axios.get("http://localhost:5000/api/appointments/doctors/top?limit=3");
+        const response = await axios.get("http://localhost:5000/api/doctors/top?limit=3");
         setDoctors(response.data);
-      } catch (err) {
-        console.error("Error fetching doctors for Home page:", err);
-        setError("Failed to load top doctors. Please try again later."); // Set error message
-      } finally {
-        setLoading(false); // Set loading to false after fetch attempt
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching top doctors:", error);
+        setError("Failed to load top doctors. Please try again later.");
+        setLoading(false);
       }
     };
 
-    fetchDoctors(); // Call the fetch function when the component mounts
+    fetchTopDoctors();
   }, []); // Empty dependency array means this effect runs only once after the initial render
 
   const handleBook = (doctor) => {
