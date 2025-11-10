@@ -3,33 +3,8 @@ const router = express.Router();
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
-const Notification = require("../models/Notification");
-const { upload } = require("../middlewares/upload"); // ✅ CommonJS
-const bcrypt = require("bcryptjs"); // Make sure this is imported
 const { sendEmail, emailTemplates } = require("../utils/emailService");
-
-// Helper function to create notifications
-const createNotification = async (recipientId, recipientRole, senderId, senderRole, senderName, appointmentId, type, title, message, appointmentDate, appointmentTime) => {
-  try {
-    const notification = new Notification({
-      recipientId,
-      recipientRole,
-      senderId,
-      senderRole,
-      senderName,
-      appointmentId,
-      type,
-      title,
-      message,
-      appointmentDate,
-      appointmentTime,
-    });
-    await notification.save();
-    return notification;
-  } catch (error) {
-    console.error("Error creating notification:", error);
-  }
-};
+const { createNotification } = require("./notificationRoutes");
 
 // 🔹 Create Appointment
 router.post("/book", async (req, res) => {
@@ -228,175 +203,6 @@ router.get("/doctor/:doctorId/date/:date", async (req, res) => {
   }
 });
 
-// 🔹 Get All Doctors
-router.get("/doctors", async (req, res) => {
-  try {
-    const doctors = await Doctor.find({});
-    const mapped = doctors.map(d => ({
-      _id: d._id,
-      fullName: d.fullName,
-      specialty: d.specialty,
-      username: d.username,
-      email: d.email,
-      // hospital: d.hospital,
-      role: d.role,
-      imageUrl: d.image && d.image.data
-        ? `/api/appointments/doctors/${d._id}/photo`
-        : (d.imageUrl || 'https://placehold.co/128x128/cccccc/ffffff?text=Doctor')
-    }));
-    res.json(mapped);
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-    res.status(500).json({ message: "Failed to fetch doctors", error });
-  }
-});
-
-// 🔹 Get Top Doctors by number of appointments
-router.get('/doctors/top', async (req, res) => {
-  try {
-    const limit = Math.max(parseInt(req.query.limit, 10) || 3, 1);
-    const agg = await Appointment.aggregate([
-      { $group: { _id: '$doctorId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: limit }
-    ]);
-
-    const ids = agg.map(a => a._id).filter(Boolean);
-    const doctors = await Doctor.find({ _id: { $in: ids } });
-    const countById = Object.fromEntries(agg.map(a => [String(a._id), a.count]));
-
-    const mapped = doctors.map(d => ({
-      _id: d._id,
-      fullName: d.fullName,
-      specialty: d.specialty,
-      username: d.username,
-      email: d.email,
-      // hospital: d.hospital,
-      role: d.role,
-      appointmentsCount: countById[String(d._id)] || 0,
-      imageUrl: d.image && d.image.data
-        ? `/api/appointments/doctors/${d._id}/photo`
-        : (d.imageUrl || 'https://placehold.co/128x128/cccccc/ffffff?text=Doctor')
-    }));
-
-    // Ensure order by count desc
-    mapped.sort((a, b) => b.appointmentsCount - a.appointmentsCount);
-    res.json(mapped);
-  } catch (error) {
-    console.error('Error fetching top doctors:', error);
-    res.status(500).json({ message: 'Failed to fetch top doctors', error: error.message });
-  }
-});
-
-// 🔹 Create Doctor (with photo)
-router.post("/doctors", upload.single("image"), async (req, res) => {
-  try {
-    const { fullName, specialty, hospital, email, username, password } = req.body;
-    const newDoctor = new Doctor({
-      fullName,
-      specialty,
-      email,
-      username,
-      password,
-      // hospital
-    });
-    if (req.file) {
-      newDoctor.image = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
-      };
-      newDoctor.imageUrl = undefined;
-    }
-    await newDoctor.save();
-
-    // Send welcome email with credentials to doctor
-    try {
-      await sendEmail(
-        email,
-        'Welcome to OptiDoc - Doctor Account Created',
-        emailTemplates.doctorWelcome(fullName, username, password, specialty)
-      );
-      console.log('Doctor welcome email sent to:', email);
-    } catch (emailError) {
-      console.error('Failed to send doctor welcome email:', emailError);
-      // Don't fail doctor creation if email fails
-    }
-
-    res.status(201).json({ message: "Doctor added successfully", doctor: newDoctor });
-  } catch (error) {
-    console.error("Error adding doctor:", error);
-    res.status(500).json({ message: "Failed to add doctor", error: error.message });
-  }
-});
-
-// 🔹 Update Doctor by ID (including photo)
-router.put("/doctors/:id", upload.single("image"), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-    const passwordChanged = !!updateData.password;
-
-    // Hash password if provided
-    if (updateData.password) {
-      const salt = await bcrypt.genSalt(10);
-      updateData.password = await bcrypt.hash(updateData.password, salt);
-    }
-
-    if (req.file) {
-      updateData.image = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
-      };
-      updateData.imageUrl = undefined;
-    }
-
-    const updatedDoctor = await Doctor.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedDoctor) {
-      return res.status(404).json({ message: "Doctor not found" });
-    }
-
-    // Send email notification to doctor about profile update
-    try {
-      await sendEmail(
-        updatedDoctor.email,
-        'Profile Updated - OptiDoc',
-        emailTemplates.doctorProfileUpdated(
-          updatedDoctor.fullName,
-          updatedDoctor.username,
-          updatedDoctor.specialty,
-          passwordChanged
-        )
-      );
-      console.log('Doctor profile update email sent to:', updatedDoctor.email);
-    } catch (emailError) {
-      console.error('Failed to send doctor profile update email:', emailError);
-      // Don't fail update if email fails
-    }
-
-    res.json({ message: "Doctor updated successfully", doctor: updatedDoctor });
-  } catch (error) {
-    console.error("Error updating doctor:", error);
-    res.status(500).json({ message: "Failed to update doctor", error: error.message });
-  }
-});
-
-// 🔹 Serve doctor photo
-router.get('/doctors/:id/photo', async (req, res) => {
-  try {
-    const doctor = await Doctor.findById(req.params.id).select('image imageUrl');
-    if (!doctor) return res.status(404).send('Not found');
-    if (doctor.image && doctor.image.data) {
-      res.set('Content-Type', doctor.image.contentType || 'image/jpeg');
-      return res.send(doctor.image.data);
-    }
-    // Fallback: redirect to imageUrl if exists, otherwise 404
-    if (doctor.imageUrl) return res.redirect(doctor.imageUrl);
-    return res.status(404).send('No image');
-  } catch (err) {
-    return res.status(500).send('Server error');
-  }
-});
-
 // 🔹 Delete Appointment by ID
 router.delete("/:id", async (req, res) => {
   try {
@@ -407,13 +213,108 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// 🔹 Delete Doctor by ID
-router.delete("/doctors/:id", async (req, res) => {
+// 🔹 Update Appointment Status (Admin only)
+router.put("/:id/status-admin", async (req, res) => {
   try {
-    await Doctor.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Doctor deleted" });
+    const { id } = req.params;
+    const { status, notes, newDate, newTime, adminId, adminName } = req.body;
+
+    const appointment = await Appointment.findById(id)
+      .populate("patientId", "fullName email")
+      .populate("doctorId", "fullName specialty");
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const oldStatus = appointment.status;
+    const oldDate = appointment.date;
+    const oldTime = appointment.time;
+
+    // Update appointment
+    appointment.status = status;
+    if (notes) appointment.notes = notes;
+    if (newDate) appointment.date = newDate;
+    if (newTime) appointment.time = newTime;
+
+    await appointment.save();
+
+    const patient = await Patient.findById(appointment.patientId._id);
+    const doctor = await Doctor.findById(appointment.doctorId._id);
+
+    // Track changes
+    const changes = [];
+    if (oldStatus !== status) {
+      changes.push(`Status: ${oldStatus} → ${status}`);
+    }
+    if (newDate && oldDate !== newDate) {
+      changes.push(`Date: ${oldDate} → ${newDate}`);
+    }
+    if (newTime && oldTime !== newTime) {
+      changes.push(`Time: ${oldTime} → ${newTime}`);
+    }
+
+    const changeMessage = changes.length > 0 ? ` Changes: ${changes.join(', ')}` : '';
+
+    // Notify patient
+    await createNotification(
+      appointment.patientId._id,
+      "patient",
+      adminId,
+      "admin",
+      adminName || "Admin",
+      appointment._id,
+      "appointment_updated",
+      "Appointment Updated by Admin",
+      `Your appointment has been updated by ${adminName || "Admin"}.${changeMessage}`,
+      appointment.date,
+      appointment.time
+    );
+
+    // Notify doctor
+    await createNotification(
+      appointment.doctorId._id,
+      "doctor",
+      adminId,
+      "admin",
+      adminName || "Admin",
+      appointment._id,
+      "appointment_updated",
+      "Appointment Updated by Admin",
+      `Appointment with ${patient.fullName} has been updated by ${adminName || "Admin"}.${changeMessage}`,
+      appointment.date,
+      appointment.time
+    );
+
+    // Send email notifications
+    try {
+      await sendEmail(
+        patient.email,
+        'Appointment Status Update - OptiDoc',
+        emailTemplates.appointmentStatusChanged(
+          patient.fullName,
+          doctor.fullName,
+          appointment.date,
+          appointment.time,
+          oldStatus,
+          status,
+          `Your appointment has been updated by Admin.${changeMessage}`
+        )
+      );
+      console.log('Admin appointment update email sent to patient:', patient.email);
+    } catch (emailError) {
+      console.error('Failed to send email to patient:', emailError);
+    }
+
+    // Return updated appointment
+    const updatedAppointmentWithDetails = await Appointment.findById(appointment._id)
+      .populate("patientId", "fullName email username")
+      .populate("doctorId", "fullName specialty username");
+    
+    res.json({ message: "Appointment status updated by admin", appointment: updatedAppointmentWithDetails });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error updating appointment status (admin):", error);
+    res.status(500).json({ message: "Failed to update appointment status", error: error.message });
   }
 });
 
@@ -552,226 +453,6 @@ router.put("/:id/status", async (req, res) => {
     res.json({ message: "Appointment status updated", appointment: updatedAppointmentWithDetails });
   } catch (error) {
     console.error("Error updating appointment status:", error);
-    res.status(500).json({ message: "Failed to update appointment status", error: error.message });
-  }
-});
-
-// 🔹 Get Notifications for User
-router.get("/notifications/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { role } = req.query;
-
-    if (!role) {
-      return res.status(400).json({ message: "Role is required" });
-    }
-
-    const notifications = await Notification.find({ 
-      recipientId: userId, 
-      recipientRole: role 
-    })
-    .populate("appointmentId")
-    .sort({ createdAt: -1 })
-    .limit(50);
-
-    res.json(notifications);
-  } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({ message: "Failed to fetch notifications", error: error.message });
-  }
-});
-
-// 🔹 Mark Notification as Read
-router.put("/notifications/:id/read", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const notification = await Notification.findByIdAndUpdate(
-      id,
-      { isRead: true },
-      { new: true }
-    );
-
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-
-    res.json({ message: "Notification marked as read", notification });
-  } catch (error) {
-    console.error("Error marking notification as read:", error);
-    res.status(500).json({ message: "Failed to mark notification as read", error: error.message });
-  }
-});
-
-// 🔹 Mark All Notifications as Read
-router.put("/notifications/:userId/read-all", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { role } = req.query;
-
-    if (!role) {
-      return res.status(400).json({ message: "Role is required" });
-    }
-
-    await Notification.updateMany(
-      { recipientId: userId, recipientRole: role, isRead: false },
-      { isRead: true }
-    );
-
-    res.json({ message: "All notifications marked as read" });
-  } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    res.status(500).json({ message: "Failed to mark all notifications as read", error: error.message });
-  }
-});
-
-// 🔹 Update Appointment Status (Admin only)
-router.put("/:id/status-admin", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, notes, newDate, newTime, adminId, adminName } = req.body;
-
-    const appointment = await Appointment.findById(id)
-      .populate("patientId", "fullName email")
-      .populate("doctorId", "fullName email specialty");
-
-    if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-
-    const oldStatus = appointment.status;
-    const oldDate = appointment.date;
-    const oldTime = appointment.time;
-
-    // Update appointment
-    appointment.status = status;
-    if (notes) appointment.notes = notes;
-    if (newDate) appointment.date = newDate;
-    if (newTime) appointment.time = newTime;
-
-    await appointment.save();
-
-    const patient = appointment.patientId;
-    const doctor = appointment.doctorId;
-
-    // Create notification message
-    const changes = [];
-    if (oldStatus !== status) changes.push(`status: ${oldStatus} → ${status}`);
-    if (newDate && oldDate !== newDate) changes.push(`date: ${oldDate} → ${newDate}`);
-    if (newTime && oldTime !== newTime) changes.push(`time: ${oldTime} → ${newTime}`);
-    const changeMessage = changes.length > 0 ? ` (${changes.join(', ')})` : '';
-
-    let notificationType, title, message;
-
-    switch (status) {
-      case "completed":
-        notificationType = "appointment_completed";
-        title = "Appointment Completed";
-        message = `Admin has marked your appointment as completed${changeMessage}`;
-        break;
-      case "cleared":
-        notificationType = "appointment_cleared";
-        title = "Appointment Cleared";
-        message = `Admin has cleared your appointment${changeMessage}`;
-        break;
-      case "delayed":
-        notificationType = "appointment_delayed";
-        title = "Appointment Delayed";
-        message = `Admin has delayed your appointment${changeMessage}`;
-        break;
-      case "rescheduled":
-        notificationType = "appointment_rescheduled";
-        title = "Appointment Rescheduled";
-        message = `Admin has rescheduled your appointment${changeMessage}`;
-        break;
-      case "canceled":
-        notificationType = "appointment_canceled";
-        title = "Appointment Canceled";
-        message = `Admin has canceled your appointment${changeMessage}`;
-        break;
-      default:
-        notificationType = "appointment_updated";
-        title = "Appointment Updated";
-        message = `Admin has updated your appointment${changeMessage}`;
-    }
-
-    // Notify patient
-    await createNotification(
-      patient._id,
-      "patient",
-      adminId,
-      "admin",
-      adminName,
-      appointment._id,
-      notificationType,
-      title,
-      message,
-      appointment.date,
-      appointment.time
-    );
-
-    // Notify doctor
-    await createNotification(
-      doctor._id,
-      "doctor",
-      adminId,
-      "admin",
-      adminName,
-      appointment._id,
-      notificationType,
-      `Admin Updated: ${title}`,
-      `Admin ${adminName} updated appointment with ${patient.fullName}${changeMessage}`,
-      appointment.date,
-      appointment.time
-    );
-
-    // Send email to patient
-    try {
-      await sendEmail(
-        patient.email,
-        `Appointment ${title} - OptiDoc`,
-        emailTemplates.appointmentStatusChanged(
-          patient.fullName,
-          doctor.fullName,
-          appointment.date,
-          appointment.time,
-          oldStatus,
-          status,
-          `${message}\n\nChanged by: Admin (${adminName})`
-        )
-      );
-      console.log('Appointment status change email sent to patient:', patient.email);
-    } catch (emailError) {
-      console.error('Failed to send email to patient:', emailError);
-    }
-
-    // Send email to doctor
-    try {
-      await sendEmail(
-        doctor.email,
-        `Admin Updated Appointment - OptiDoc`,
-        emailTemplates.appointmentStatusChanged(
-          `Dr. ${doctor.fullName}`,
-          patient.fullName,
-          appointment.date,
-          appointment.time,
-          oldStatus,
-          status,
-          `Admin ${adminName} has updated the appointment with patient ${patient.fullName}${changeMessage}`
-        )
-      );
-      console.log('Appointment status change email sent to doctor:', doctor.email);
-    } catch (emailError) {
-      console.error('Failed to send email to doctor:', emailError);
-    }
-
-    // Return updated appointment with populated data
-    const updatedAppointmentWithDetails = await Appointment.findById(appointment._id)
-      .populate("patientId", "fullName email username")
-      .populate("doctorId", "fullName email specialty username");
-    
-    res.json({ message: "Appointment status updated by admin", appointment: updatedAppointmentWithDetails });
-  } catch (error) {
-    console.error("Error updating appointment status (admin):", error);
     res.status(500).json({ message: "Failed to update appointment status", error: error.message });
   }
 });
