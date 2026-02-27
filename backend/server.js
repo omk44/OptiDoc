@@ -14,9 +14,13 @@ const app = express();
 
 // CORS configuration for production
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || '*'
-    : 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5175',
+    'https://opti-doc.vercel.app',
+    'https://opti-doc-git-main-omk44s-projects.vercel.app',
+    'https://opti-1zxxuehzk-omk44s-projects.vercel.app'
+  ],
   credentials: true
 };
 app.use(cors(corsOptions));
