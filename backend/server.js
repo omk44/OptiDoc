@@ -33,15 +33,32 @@ app.get("/", (req, res) => {
   res.json({ status: "OK", message: "OptiDoc Backend is running", timestamp: new Date().toISOString() });
 });
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("Mongo Error:", err));
+// Cached MongoDB connection for serverless environments
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    isConnected = true;
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.log("Mongo Error:", err);
+    throw err;
+  }
+};
+
+connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Only listen when running locally (not on Vercel)
+if (process.env.VERCEL !== "1") {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Export for Vercel serverless function
+module.exports = app;
