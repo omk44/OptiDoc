@@ -50,10 +50,17 @@ const connectDB = async () => {
 
 connectDB();
 
+// Routes - mounted at both paths for local dev (/api/...) and Vercel serverless (/...)
 app.use("/api/auth", authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+// Vercel serverless strips /api prefix, so mount at root paths too
+app.use("/auth", authRoutes);
+app.use("/appointments", appointmentRoutes);
+app.use("/doctors", doctorRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Only listen when running locally (not on Vercel)
 if (process.env.VERCEL !== "1") {
