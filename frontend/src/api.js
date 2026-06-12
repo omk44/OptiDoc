@@ -1,7 +1,10 @@
 import axios from "axios";
 
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+export const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: API_URL,
 });
 
 // Notification API functions

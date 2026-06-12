@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../api";
 
 const NotificationDropdown = () => {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ const NotificationDropdown = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${user._id}?role=${user.role}`
+        `${API_URL}/notifications/${user._id}?role=${user.role}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -49,7 +50,7 @@ const NotificationDropdown = () => {
   const markAsRead = async (notificationId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${notificationId}/read`,
+        `${API_URL}/notifications/${notificationId}/read`,
         { method: "PUT" }
       );
       if (response.ok) {
@@ -67,7 +68,7 @@ const NotificationDropdown = () => {
   const markAllAsRead = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${user._id}/read-all?role=${user.role}`,
+        `${API_URL}/notifications/${user._id}/read-all?role=${user.role}`,
         { method: "PUT" }
       );
       if (response.ok) {

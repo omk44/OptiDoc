@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_URL, BASE_URL } from "../api";
 
 export default function AllDoctors() {
   const [doctors, setDoctors] = useState([]);
@@ -13,7 +14,7 @@ export default function AllDoctors() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/doctors");
+        const response = await axios.get(`${API_URL}/doctors`);
         setDoctors(response.data);
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -166,7 +167,7 @@ function Avatar({ fullName, imageUrl }) {
     .join('') || 'DR';
 
   if (imageUrl && !failed) {
-    const src = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    const src = imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}${imageUrl}`;
     return (
       <img
         src={src}

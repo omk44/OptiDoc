@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import doctorIcon from "../assets/doctor_icon.png";
 import bg from "../assets/bg.png";
+import { API_URL } from "../api";
 
 function Signup() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ function Signup() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

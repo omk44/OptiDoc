@@ -4,6 +4,7 @@ import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash } from "react-icons/fa";
 import doctorIcon from "../assets/doctor_icon.png";
 import bg from "../assets/bg.png";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../api";
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,7 +28,7 @@ const Login = () => {
     console.log("Form Data submitted:", formData);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

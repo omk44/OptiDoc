@@ -1,5 +1,6 @@
 // src/components/DoctorCard.jsx
 import { useState } from 'react';
+import { BASE_URL } from '../api';
 
 export default function DoctorCard({ doctor, onBook }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -16,7 +17,7 @@ export default function DoctorCard({ doctor, onBook }) {
       {/* Doctor Image/Avatar */}
       {doctor.imageUrl && !imageFailed ? (
         <img
-          src={doctor.imageUrl.startsWith('http') ? doctor.imageUrl : `http://localhost:5000${doctor.imageUrl}`}
+          src={doctor.imageUrl.startsWith('http') ? doctor.imageUrl : `${BASE_URL}${doctor.imageUrl}`}
           alt={doctor.fullName}
           onError={() => setImageFailed(true)}
           className="w-40 h-40 object-cover rounded-full mb-6 border-4 border-blue-200 shadow-lg"

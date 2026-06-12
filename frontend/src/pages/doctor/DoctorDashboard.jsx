@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Footer from "../../components/Footer";
+import { API_URL } from "../../api";
 
 const DoctorDashboard = () => {
   const { user, logout } = useAuth();
@@ -25,7 +26,7 @@ const DoctorDashboard = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/appointments/doctor/${user._id}`);
+      const response = await fetch(`${API_URL}/appointments/doctor/${user._id}`);
       if (response.ok) {
         const data = await response.json();
         setAppointments(data);
@@ -39,7 +40,7 @@ const DoctorDashboard = () => {
 
   const fetchAppointmentChanges = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/notifications/${user._id}?role=doctor`);
+      const response = await fetch(`${API_URL}/notifications/${user._id}?role=doctor`);
       if (response.ok) {
         const data = await response.json();
         // Get all appointment-related notifications for this doctor
@@ -57,7 +58,7 @@ const DoctorDashboard = () => {
     if (!selectedAppointment || !statusUpdate.status) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/appointments/${selectedAppointment._id}/status`, {
+      const response = await fetch(`${API_URL}/appointments/${selectedAppointment._id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../api";
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState([]);
@@ -13,7 +14,7 @@ export default function Appointments() {
 
     const fetchAppointments = async () => {
       try {
-        const baseUrl = "http://localhost:5000/api/appointments";
+        const baseUrl = `${API_URL}/appointments`;
         let res;
         
         if (user.role === "patient")

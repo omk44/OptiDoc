@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { API_URL } from "../api";
 
 // Helper function to generate time slots (e.g., every 30 minutes)
 const generateTimeSlots = () => {
@@ -57,7 +58,7 @@ export default function BookingForm() {
     setSlotsError(null);
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/appointments/doctor/${doctorId}/date/${date}`
+        `${API_URL}/appointments/doctor/${doctorId}/date/${date}`
       );
       setBookedSlots(response.data);
     } catch (err) {
@@ -117,7 +118,7 @@ export default function BookingForm() {
     };
 
     try {
-      const response = await axios.post("http://localhost:5000/api/appointments/book", appointmentData);
+      const response = await axios.post(`${API_URL}/appointments/book`, appointmentData);
       
       if (response.status === 201) {
         alert(`✅ Appointment booked with ${doctor.fullName} on ${formData.date} at ${formData.time}\n\n📧 A confirmation email has been sent to your registered email address.`);

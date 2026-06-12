@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_URL } from "../api";
 
 const AuthContext = createContext();
 
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
         // Verify user still exists in DB
         const params = new URLSearchParams({ id: parsedUser._id, role: parsedUser.role });
-        const res = await fetch(`http://localhost:5000/api/auth/me?${params.toString()}`);
+        const res = await fetch(`${API_URL}/auth/me?${params.toString()}`);
         if (!res.ok) {
           // Clear invalid session
           localStorage.removeItem('optidoc_user');

@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import React, { useEffect, useState } from 'react'; // Import React hooks
 import axios from 'axios'; // Import axios for making API requests
+import { API_URL, BASE_URL } from '../api';
 import { useNavigate } from 'react-router-dom';
 import DoctorCard from '../components/DoctorCard';
 
@@ -13,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     const fetchTopDoctors = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/doctors/top?limit=3");
+        const response = await axios.get(`${API_URL}/doctors/top?limit=3`);
         setDoctors(response.data);
         setLoading(false);
       } catch (error) {
@@ -145,7 +146,7 @@ function Avatar({ fullName, imageUrl }) {
     .join('') || 'DR';
 
   if (imageUrl && !failed) {
-    const src = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    const src = imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}${imageUrl}`;
     return (
       <img
         src={src}
