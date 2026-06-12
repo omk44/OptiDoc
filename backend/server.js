@@ -18,6 +18,7 @@ const corsOptions = {
     'http://localhost:5173',
     'http://localhost:5175',
     'https://opti-doc.vercel.app',
+    'https://opti-doc-n5wb.vercel.app',
     'https://opti-doc-git-main-omk44s-projects.vercel.app',
     'https://opti-1zxxuehzk-omk44s-projects.vercel.app'
   ],
